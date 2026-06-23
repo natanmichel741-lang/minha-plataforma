@@ -1,0 +1,101 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Company {
+  id          String   @id @default(cuid())
+  name        String
+  email       String   @unique
+  plan        String   @default("free")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users       User[]
+  connections Connection[]
+  contacts    Contact[]
+  messages    Message[]
+  flows       Flow[]
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("member")
+  companyId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+model Connection {
+  id           String   @id @default(cuid())
+  name         String
+  instanceId   String   @unique
+  instanceToken String
+  status       String   @default("disconnected")
+  phoneNumber  String?
+  type         String   @default("whatsapp")
+  companyId    String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  company      Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  messages     Message[]
+}
+
+model Contact {
+  id          String   @id @default(cuid())
+  name        String
+  phone       String
+  email       String?
+  avatar      String?
+  tags        String   @default("[]")
+  companyId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  company     Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  messages    Message[]
+
+  @@unique([phone, companyId])
+}
+
+model Message {
+  id           String   @id @default(cuid())
+  body         String
+  fromMe       Boolean  @default(false)
+  status       String   @default("sent")
+  type         String   @default("text")
+  mediaUrl     String?
+  externalId   String?
+  contactId    String
+  connectionId String
+  companyId    String
+  createdAt    DateTime @default(now())
+
+  contact      Contact    @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  connection   Connection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  company      Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+model Flow {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  nodes       String   @default("[]")
+  edges       String   @default("[]")
+  active      Boolean  @default(false)
+  companyId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  company     Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}

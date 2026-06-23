@@ -1,0 +1,9 @@
+node_modules/
+.env
+.env.local
+*.db
+*.db-journal
+prisma/migrations/
+.next/
+dist/
+.DS_Store
