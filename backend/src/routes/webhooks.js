@@ -13,9 +13,11 @@ router.post('/:instanceId', async (req, res) => {
 
     const io = req.app.get('io');
 
-    if (event.event === 'connection.update') {
-      const status = event.data?.state === 'open' ? 'connected' : 'disconnected';
-      const phoneNumber = event.data?.phoneNumber || null;
+    const isConnectionEvent = event.event === 'connection.update' || event.type === 'connection' || event.status !== undefined;
+    if (isConnectionEvent) {
+      const connected = event.data?.state === 'open' || event.status === 'connected' || event.connected === true;
+      const status = connected ? 'connected' : 'disconnected';
+      const phoneNumber = event.data?.phoneNumber || event.phoneNumber || null;
 
       await prisma.connection.update({
         where: { instanceId },
@@ -29,8 +31,9 @@ router.post('/:instanceId', async (req, res) => {
       });
     }
 
-    if (event.event === 'messages.upsert') {
-      const msg = event.data?.messages?.[0];
+    const isMessageEvent = event.event === 'messages.upsert' || event.type === 'message' || event.data?.messages || event.message;
+    if (isMessageEvent) {
+      const msg = event.data?.messages?.[0] || (event.message ? { key: event.key, pushName: event.pushName, message: event.message } : null);
       if (!msg || msg.key?.fromMe) return res.sendStatus(200);
 
       const phone = msg.key.remoteJid?.replace('@s.whatsapp.net', '');

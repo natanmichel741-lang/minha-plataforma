@@ -34,12 +34,15 @@ export default function ChatsPage() {
 
   useEffect(() => {
     fetchChats()
+    const interval = setInterval(fetchChats, 3000)
 
     const company = localStorage.getItem('company')
     const companyId = company ? JSON.parse(company).id : null
 
     if (companyId) {
-      const socket = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')
+      const socket = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001', {
+        transports: ['polling', 'websocket'],
+      })
       socketRef.current = socket
       socket.emit('join', companyId)
 
@@ -49,7 +52,6 @@ export default function ChatsPage() {
           if (prev.find((m) => m.id === message.id)) return prev
           return [...prev, newMsg]
         })
-
         setChats((prev) => {
           const existing = prev.findIndex((c) => c.contactId === message.contactId)
           const updated: Chat = {
@@ -70,13 +72,21 @@ export default function ChatsPage() {
         })
       })
 
-      return () => { socket.disconnect() }
+      return () => { socket.disconnect(); clearInterval(interval) }
     }
+
+    return () => clearInterval(interval)
   }, [])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  useEffect(() => {
+    if (!selectedChat) return
+    const interval = setInterval(() => loadMessages(selectedChat), 3000)
+    return () => clearInterval(interval)
+  }, [selectedChat?.contactId])
 
   async function fetchChats() {
     try {
