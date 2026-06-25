@@ -29,7 +29,11 @@ export default function ConnectionsPage() {
     setLoading(false)
   }
 
-  useEffect(() => { fetchConnections() }, [])
+  useEffect(() => {
+    fetchConnections()
+    const interval = setInterval(fetchConnections, 5000)
+    return () => clearInterval(interval)
+  }, [])
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
