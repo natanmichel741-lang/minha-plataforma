@@ -7,6 +7,7 @@ router.post('/:instanceId', async (req, res) => {
   try {
     const { instanceId } = req.params;
     const event = req.body;
+    console.log('[WEBHOOK]', instanceId, JSON.stringify(event).slice(0, 300));
 
     const connection = await prisma.connection.findUnique({ where: { instanceId } });
     if (!connection) return res.status(404).json({ error: 'Instância não encontrada' });
